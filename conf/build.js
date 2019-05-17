@@ -17,7 +17,7 @@ compiler.run( (err, stats) => {
 
 
 const webpack = require('webpack')
-const webpackConfig = require('./webpack.dev.conf.js.js');
+const webpackConfig = require('./webpack.dev.conf.js');
 const compiler = webpack(webpackConfig)
 const watching = compiler.watch({
   /* watchOptions */
