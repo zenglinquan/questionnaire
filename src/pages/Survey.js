@@ -1,6 +1,7 @@
 import React from 'react';
 import DragSort from './components/DragSort'
 import Shake from './components/Shake'
+import Input from './components/Input'
 import ContentEditable from './components/ContentEditable'
 import { uuid } from '../../util/util'
 import { Tooltip } from 'antd'
@@ -26,15 +27,13 @@ export default class Home extends React.PureComponent {
 				]
 			},
 		]
-		this.state = {
-			editorsEl: [],
-			editors: [],
-			isEditor: false
-		}
 	}
 
 	state = {
+		editorsEl: [],
 		editors: [],
+		isEditor: false,
+		optionShake: [],
 		questionnairTitle: '问卷标题',
 		curMoveItem: null,
 		drag: false,
@@ -50,10 +49,6 @@ export default class Home extends React.PureComponent {
 
 	}
 
-	/*
-   * 判断是否有处于编辑状态的题目, activeEditorIndex // -1,没有处于编辑状态的题目
-   * 如果有处于编辑状态的题目，则激活该编辑器抖动
-   */
 	isThereEditor = () => {
 		const activeEditorIndex = this.state.editors.findIndex(data => data.isEditor === true);
 		if (activeEditorIndex !== -1) {
@@ -76,10 +71,11 @@ export default class Home extends React.PureComponent {
 			questionId: uuid(), //id
 			type: type, //类型
 			title: '', //题目
+			hasOption: [],
 			required: false, //是否必填
 			remark: false, //是否有备注
 			remarkText: '', //备注内容
-			options: ['选项', '选项'], //选项(只有radio,checkbox,select有,其余尽量给个空数组)
+			options: ['选项1', '选项2'], //选项(只有radio,checkbox,select有,其余尽量给个空数组)
 			rows: 1, //选项占的行数
 			textareaHeight: 3, //多行文本高度
 			maxLength: 50, //单行文本限制的字数
@@ -93,13 +89,79 @@ export default class Home extends React.PureComponent {
 			editorShake: '',
 		};
 		this.setState(prevState => ({
+			editor,
 			editors: [...prevState.editors, editor],
 		}));
 	}
 
+	//新增选项
+	createOption = () => {
+		this.setState(prevState => ({
+			editor: {
+				...prevState.editor,
+				'options': [...prevState.editor.options, ''],
+			},
+		}));
+	}
+
+	componentWillReceiveProps(nextProps) {
+
+		if (nextProps.editor.editorShake !== this.props.editor.editorShake) {
+			this.setState({
+				editor: {
+					...this.state.editor,
+					editorShake: nextProps.editor.editorShake,
+				},
+			});
+		} else {
+			this.setState({
+				editor: {
+					...this.state.editor,
+					...nextProps.editor,
+				},
+			});
+		};
+	}
+
+	delOption(index) {
+		let options = this.state.editor.options
+		options.splice(index, 1);
+		this.setState(prevState => ({
+			editor: {
+				...prevState.editor,
+				options,
+			},
+		}));
+	}
+
+	handleChange(e, index) {
+		let value = e.target ? e.target.value : e;
+		let key = e.target.name;
+		let {
+			hasOption
+		} = this.state.editor;
+		if (key == "options") {
+			let {
+				options
+			} = this.state.editor;
+			hasOption[index] = true;
+			let optionsTemp = options.concat();
+			optionsTemp[index] = value;
+			value = optionsTemp;
+		}
+		this.setState(prevState => ({
+			editor: {
+				...prevState.editor,
+				hasOption: [...hasOption],
+				[key]: value,
+			},
+		}));
+	}
+
+
 	render() {
 		let { questionTypes } = this
-		let { editors } = this.state
+		let { editors, editor } = this.state
 		return (<div className="survey">
 			<div className="question_type_wrap">
 				{
@@ -121,10 +183,26 @@ export default class Home extends React.PureComponent {
 				<div className="question-box">
 					{
 						editors.map((item, i) => {
-							let { isEditor, editorShake } = item
+							let { isEditor, editorShake, options } = item
 							return isEditor ? <Shake shake={editorShake} key={i}>
-								<QuestionItem key={i} isEditor={isEditor}></QuestionItem>
-							</Shake> : <QuestionItem key={i} isEditor={isEditor}></QuestionItem>
+								<QuestionItem
+									key={i}
+									editor={editor}
+									isEditor={editor.isEditor}
+									options={editor.options}
+									createOption={this.createOption.bind(this)}
+									delOption={this.delOption.bind(this)}
+									handleChange={this.handleChange.bind(this)}
+								></QuestionItem>
+							</Shake> : <QuestionItem
+								key={i}
+								editor={editor}
+								isEditor={editor.isEditor}
+								options={editor.options}
+								createOption={this.createOption.bind(this)}
+								delOption={this.delOption.bind(this)}
+								handleChange={this.handleChange.bind(this)}
+							></QuestionItem>
 
 						})
 					}
@@ -139,16 +217,20 @@ export default class Home extends React.PureComponent {
 }
 class QuestionItem extends React.PureComponent {
 	constructor(props) {
-		super(props)
+		super(props);
 	}
 	componentDidMount() {
 
 	}
+
+
+
 	render() {
-		let { isEditor } = this.props
-		return <div className={isEditor ? "question  question_focus" : "question "}>
+		let { isEditor, options, hasOption } = this.props.editor
+		return <div className={isEditor ? "question  question_focus" : "question question_hover"}>
 			<div className="q_content_wrap">
 				<div className="q_content">
+					<div className="q_type">单选题</div>
 					<div className="q_title_wrap">
 						<div className="q_seq">2</div>
 						<div className="content_editable">
@@ -163,32 +245,55 @@ class QuestionItem extends React.PureComponent {
 
 					<div className="q_option_list">
 						<ul className="q_option_ul ui-sortable" >
-							<li className="option_item" >
-								<div className="option_title_wrap">
-									<div className="content_editable">
-										<i className="icon_operate icon_radio"></i>
-
-										<div className="option_title" >
-											<ContentEditable
-												contentEditable={isEditor}
-												name={"optionList"}
-												html={"选项"} />
+							{
+								options.map((item, i) => {
+									return <li className="option_item" key={i}>
+										<div className="option_title_wrap">
+											{/* <i className="icon_hover"></i> */}
+											<div className="content_editable">
+												<i className="icon_operate icon_radio"></i>
+												<div className="option_title" >
+													{/* <ContentEditable
+														contentEditable={isEditor}
+														name={"optionList"}
+														html={item} /> */}
+													<Shake>
+														<Input
+															index={i}
+															name={'options'}
+															value={item}
+															onChange={(e) => {
+																this.props.handleChange(e, i)
+															}}
+															style={{
+																borderColor: hasOption[i] === false ? 'red' : ''
+															}}
+														/>
+													</Shake>
+												</div>
+												<i className="icon_operate operation_delete"
+													onClick={() => {
+														this.props.delOption(i)
+													}}
+												></i>
+											</div>
 										</div>
-									</div>
-
-								</div>
-							</li>
+									</li>
+								})
+							}
 						</ul>
 					</div>
-					<div className="q_option_operate">
-						<a className="btn_text_icon btn_add_single" >
-							<i className="icon_operate icon_add"></i>添加单个选项</a>
-						<a className="btn_text_icon btn_add_more" >
-							<i className="icon_operate icon_add_more"></i>批量添加选项</a>
-						<a className="btn_text_icon btn_add_other" >
-							<i className="icon_operate icon_add_other"></i>添加「其他」项</a>
-					</div>
-				</div >
+					{
+						isEditor ? <div className="q_option_operate">
+							<a className="btn_text_icon btn_add_single" onClick={this.props.createOption}>
+								<i className="icon_operate icon_add"></i>添加单个选项</a>
+							<a className="btn_text_icon btn_add_more" >
+								<i className="icon_operate icon_add_more"></i>批量添加选项</a>
+							<a className="btn_text_icon btn_add_other">
+								<i className="icon_operate icon_add_other"></i>添加「其他」项</a>
+						</div> : null
+					}
+				</div>
 			</div >
 			{
 				isEditor ? <div className="q_operate">
@@ -200,8 +305,8 @@ class QuestionItem extends React.PureComponent {
 				</div > : null
 			}
 			<div className="operation_btn">
-				<button class="done_btn">确定</button>
-				<button class="done_btn">取消</button>
+				<button className="done_btn" onClick={}>确定</button>
+				<button className="done_btn">取消</button>
 			</div>
 		</div >
 

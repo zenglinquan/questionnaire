@@ -13,6 +13,7 @@ ReactDOM.render((
     <Router history={hashHistory}>
         <Route path="/login" component={Login} />
         <Route path='/' component={Main}>
+            <Route path="" component={Survey} />
             <Route path="/survey" component={Survey} />
             <Route path="/publish" component={Main} />
             <Route path="/appearance" component={Appearance} />
