@@ -59,16 +59,16 @@ class Input extends React.PureComponent {
       <div
         className="wowjoy-input"
         style={{ width, margin }}>
-          {type === 'textarea' ? (
-            <textarea {...otherProps}
-              rows={rows}
-              name={name}
-              disabled={disabled}
-              onChange={this.handleChange}
-              style={style}
-              className="wowjoy-textarea__inner"
-            />
-          ) : (
+        {type === 'textarea' ? (
+          <textarea {...otherProps}
+            rows={rows}
+            name={name}
+            disabled={disabled}
+            onChange={this.handleChange}
+            style={style}
+            className="wowjoy-textarea__inner"
+          />
+        ) : (
             <input {...otherProps}
               type={type || 'text'}
               name={name}

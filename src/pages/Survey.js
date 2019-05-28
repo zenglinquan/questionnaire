@@ -34,6 +34,9 @@ export default class Home extends React.PureComponent {
 		editors: [],
 		isEditor: false,
 		optionShake: [],
+		hasOption: [],
+		hasTitle: true,
+		inputShake: false,
 		questionnairTitle: '问卷标题',
 		curMoveItem: null,
 		drag: false,
@@ -43,6 +46,25 @@ export default class Home extends React.PureComponent {
 
 	componentDidMount() {
 
+	}
+
+	componentWillReceiveProps(nextProps) {
+
+		if (nextProps.editor.editorShake !== this.props.editor.editorShake) {
+			this.setState({
+				editor: {
+					...this.state.editor,
+					editorShake: nextProps.editor.editorShake,
+				},
+			});
+		} else {
+			this.setState({
+				editor: {
+					...this.state.editor,
+					...nextProps.editor,
+				},
+			});
+		};
 	}
 
 	editorsEl() {
@@ -63,15 +85,16 @@ export default class Home extends React.PureComponent {
 		};
 	}
 
-	createEditor(type) {
+	createEditor(item) {
+		let { type, name } = item;
 		if (this.isThereEditor()) {
 			return;
 		}
 		const editor = {
 			questionId: uuid(), //id
 			type: type, //类型
-			title: '', //题目
-			hasOption: [],
+			name: name,
+			title: '题目', //题目
 			required: false, //是否必填
 			remark: false, //是否有备注
 			remarkText: '', //备注内容
@@ -95,33 +118,20 @@ export default class Home extends React.PureComponent {
 	}
 
 	//新增选项
-	createOption = () => {
+	createOption = (index) => {
+		let prevState = this.state
+		let editor = {
+			...prevState.editor,
+			'options': [...prevState.editor.options, ''],
+		};
+		prevState.editors[index] = editor;
 		this.setState(prevState => ({
-			editor: {
-				...prevState.editor,
-				'options': [...prevState.editor.options, ''],
-			},
+			editor,
+			editors: [...prevState.editors]
 		}));
 	}
 
-	componentWillReceiveProps(nextProps) {
 
-		if (nextProps.editor.editorShake !== this.props.editor.editorShake) {
-			this.setState({
-				editor: {
-					...this.state.editor,
-					editorShake: nextProps.editor.editorShake,
-				},
-			});
-		} else {
-			this.setState({
-				editor: {
-					...this.state.editor,
-					...nextProps.editor,
-				},
-			});
-		};
-	}
 
 	delOption(index) {
 		let options = this.state.editor.options
@@ -134,34 +144,82 @@ export default class Home extends React.PureComponent {
 		}));
 	}
 
-	handleChange(e, index) {
+	handleChange(e, editorIndex, OptIndex) {
 		let value = e.target ? e.target.value : e;
+		let finaVal = '';
 		let key = e.target.name;
-		let {
-			hasOption
-		} = this.state.editor;
+		let { editor: preEditor, editors: preEditors, hasOption } = this.state;
+		if (key === 'title' && value) {
+			finaVal = value;
+			this.setState({
+				hasTitle: true,
+			});
+		};
 		if (key == "options") {
 			let {
 				options
-			} = this.state.editor;
-			hasOption[index] = true;
+			} = preEditor;
+			hasOption[OptIndex] = true;
 			let optionsTemp = options.concat();
-			optionsTemp[index] = value;
-			value = optionsTemp;
+			optionsTemp[OptIndex] = value;
+			finaVal = optionsTemp;
 		}
-		this.setState(prevState => ({
-			editor: {
-				...prevState.editor,
-				hasOption: [...hasOption],
-				[key]: value,
-			},
-		}));
+		let editor = {
+			...preEditor,
+			hasOption: [...hasOption],
+			[key]: finaVal,
+		};
+		console.log(editor, "e")
+		preEditors[editorIndex] = editor;
+		this.setState({
+			editor,
+			editors: [...preEditors]
+		})
 	}
 
+	cancel = () => {
+		let { editors: preEditors } = this.state;
+		preEditors.pop();
+		this.setState({
+			editors: [...preEditors]
+		})
+	}
+
+	ok = (index) => {
+		let { editors: preEditors, editor } = this.state;
+		if (!editor.title) {
+			this.setState(prevState => ({
+				inputShake: !prevState.inputShake,
+				hasTitle: false,
+			}));
+			return;
+		};
+		let empty = editor.options.some((item, ind) => {
+			if (item === '') {
+				this.setState(prevState => {
+					prevState.optionShake[ind] = !prevState.optionShake[ind];
+					prevState.hasOption[ind] = false;
+					return {
+						optionShake: [...prevState.optionShake],
+						hasOption: [...prevState.hasOption],
+					}
+				})
+				return true;
+			}
+		})
+		if (empty) return;
+		preEditors[index].isEditor = false;
+		preEditors[index].isFirst = false;
+		this.setState({
+			editors: [...preEditors],
+		})
+
+	}
 
 	render() {
 		let { questionTypes } = this
-		let { editors, editor } = this.state
+		let { editors, editor, optionShake, inputShake, hasTitle, hasOption } = this.state;
+		console.log(editors)
 		return (<div className="survey">
 			<div className="question_type_wrap">
 				{
@@ -171,7 +229,7 @@ export default class Home extends React.PureComponent {
 							<dd className="wrap">
 								{
 									item.value.map((item, i) => {
-										return <label key={i} onClick={this.createEditor.bind(this, item.type)}><i className={`icon_type icon_type_${item.type}`}></i>{item.name}</label>
+										return <label key={i} onClick={this.createEditor.bind(this, item)}><i className={`icon_type icon_type_${item.type}`}></i>{item.name}</label>
 									})
 								}
 							</dd>
@@ -183,25 +241,33 @@ export default class Home extends React.PureComponent {
 				<div className="question-box">
 					{
 						editors.map((item, i) => {
-							let { isEditor, editorShake, options } = item
+							let { isEditor, editorShake } = item
 							return isEditor ? <Shake shake={editorShake} key={i}>
 								<QuestionItem
 									key={i}
 									editor={editor}
-									isEditor={editor.isEditor}
-									options={editor.options}
-									createOption={this.createOption.bind(this)}
+									item={item}
+									index={i}
+									optionShake={optionShake}
+									inputShake={inputShake}
+									hasTitle={hasTitle}
+									hasOption={hasOption}
+									createOption={this.createOption.bind(this, i)}
 									delOption={this.delOption.bind(this)}
 									handleChange={this.handleChange.bind(this)}
+									onCancel={this.cancel.bind(this)}
+									onOK={this.ok.bind(this, i)}
 								></QuestionItem>
 							</Shake> : <QuestionItem
 								key={i}
+								index={i}
 								editor={editor}
-								isEditor={editor.isEditor}
-								options={editor.options}
+								item={item}
 								createOption={this.createOption.bind(this)}
 								delOption={this.delOption.bind(this)}
 								handleChange={this.handleChange.bind(this)}
+								onCancel={this.cancel.bind(this)}
+								onOK={this.ok.bind(this, i)}
 							></QuestionItem>
 
 						})
@@ -226,15 +292,33 @@ class QuestionItem extends React.PureComponent {
 
 
 	render() {
-		let { isEditor, options, hasOption } = this.props.editor
+		let { index, editor, optionShake, inputShake, hasTitle, hasOption } = this.props
+		let { isEditor, options, name, title } = this.props.item
 		return <div className={isEditor ? "question  question_focus" : "question question_hover"}>
 			<div className="q_content_wrap">
 				<div className="q_content">
-					<div className="q_type">单选题</div>
+					<div className="q_type">{name}</div>
 					<div className="q_title_wrap">
-						<div className="q_seq">2</div>
-						<div className="content_editable">
-							<div className="q_title" >请选择以下选项 (多选)</div>
+						<div className="q_seq">{index + 1}</div>
+						<div className={isEditor ? "content_editable" : ""}>
+							<div className="q_title" >
+								{
+									isEditor ? <Shake shake={inputShake}>
+										<ContentEditable
+											contentEditable={isEditor}
+											html={title}
+											index={index}
+											name='title'
+											style={{
+												borderColor: hasTitle ? '' : "red"
+											}}
+											onChange={(e) => {
+												this.props.handleChange(e, index)
+											}}
+										/>
+									</Shake> : <div>{title}</div>
+								}
+							</div>
 						</div>
 					</div>
 					<div className="q_desc_wrap none">
@@ -250,33 +334,39 @@ class QuestionItem extends React.PureComponent {
 									return <li className="option_item" key={i}>
 										<div className="option_title_wrap">
 											{/* <i className="icon_hover"></i> */}
-											<div className="content_editable">
-												<i className="icon_operate icon_radio"></i>
-												<div className="option_title" >
-													{/* <ContentEditable
-														contentEditable={isEditor}
-														name={"optionList"}
-														html={item} /> */}
-													<Shake>
-														<Input
-															index={i}
-															name={'options'}
-															value={item}
-															onChange={(e) => {
-																this.props.handleChange(e, i)
-															}}
-															style={{
-																borderColor: hasOption[i] === false ? 'red' : ''
-															}}
-														/>
-													</Shake>
+											{
+												isEditor ? <div className="content_editable">
+													<i className="icon_operate icon_radio"></i>
+													<div className="option_title" >
+														<Shake shake={optionShake[i]}>
+															<Input
+																type='text'
+																index={i}
+																placeholder={item}
+																name={'options'}
+																// value={item}
+																maxLength={50}
+																onChange={(e) => {
+																	this.props.handleChange(e, index, i)
+																}}
+																style={{
+																	borderColor: hasOption[i] === false ? 'red' : ''
+																}}
+															/>
+														</Shake>
+													</div>
+													<i className="icon_operate operation_delete"
+														onClick={() => {
+															this.props.delOption(i)
+														}}
+													></i>
 												</div>
-												<i className="icon_operate operation_delete"
-													onClick={() => {
-														this.props.delOption(i)
-													}}
-												></i>
-											</div>
+													: <div>
+														<input type="radio"></input>
+														<span className="option_value">{item}</span>
+													</div>
+
+											}
 										</div>
 									</li>
 								})
@@ -304,10 +394,12 @@ class QuestionItem extends React.PureComponent {
 					</div >
 				</div > : null
 			}
-			<div className="operation_btn">
-				<button className="done_btn" onClick={}>确定</button>
-				<button className="done_btn">取消</button>
-			</div>
+			{
+				isEditor ? <div className="operation_btn">
+					<button className="done_btn" onClick={this.props.onOK}>确定</button>
+					<button className="done_btn" onClick={this.props.onCancel}>取消</button>
+				</div> : null
+			}
 		</div >
 
 	}
