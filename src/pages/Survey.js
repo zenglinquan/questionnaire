@@ -4,7 +4,8 @@ import Shake from './components/Shake'
 import Input from './components/Input'
 import ContentEditable from './components/ContentEditable'
 import { uuid } from '../../util/util'
-import { Tooltip } from 'antd'
+import { Tooltip, Select } from 'antd'
+const { Option } = Select;
 export default class Home extends React.PureComponent {
 	constructor(props) {
 		super(props);
@@ -16,7 +17,7 @@ export default class Home extends React.PureComponent {
 				name: "选择题",
 				type: 0,
 				value: [
-					{ name: "单选题", type: "single" }, { name: "多选题", type: "multiple" }, { name: "图片选择", type: "image" }, { name: "下拉题", type: "dropdown" }
+					{ name: "单选题", type: "radio" }, { name: "多选题", type: "checkbox" }, { name: "图片选择", type: "image" }, { name: "下拉题", type: "select" }
 				]
 			},
 			{
@@ -293,7 +294,7 @@ class QuestionItem extends React.PureComponent {
 
 	render() {
 		let { index, editor, optionShake, inputShake, hasTitle, hasOption } = this.props
-		let { isEditor, options, name, title } = this.props.item
+		let { isEditor, options, name, title, type } = this.props.item
 		return <div className={isEditor ? "question  question_focus" : "question question_hover"}>
 			<div className="q_content_wrap">
 				<div className="q_content">
@@ -330,20 +331,31 @@ class QuestionItem extends React.PureComponent {
 					<div className="q_option_list">
 						<ul className="q_option_ul ui-sortable" >
 							{
+								type == "select" && !isEditor ?
+									<Select defaultValue={options[0]}>
+										{
+											options.map((item, i) => {
+												return <option key={i}>{item}</option>
+											})
+										}
+									</Select>
+									: null
+							}
+							{
 								options.map((item, i) => {
 									return <li className="option_item" key={i}>
 										<div className="option_title_wrap">
 											{/* <i className="icon_hover"></i> */}
 											{
 												isEditor ? <div className="content_editable">
-													<i className="icon_operate icon_radio"></i>
+													<i className={"icon_base icon_option_" + type}></i>
 													<div className="option_title" >
 														<Shake shake={optionShake[i]}>
 															<Input
 																type='text'
 																index={i}
 																placeholder={item}
-																name={'options'}
+																name='options'
 																// value={item}
 																maxLength={50}
 																onChange={(e) => {
@@ -362,10 +374,13 @@ class QuestionItem extends React.PureComponent {
 													></i>
 												</div>
 													: <div>
-														<input type="radio"></input>
-														<span className="option_value">{item}</span>
+														{
+															type == "radio" || type == "checkbox" ? <div>
+																<input type={type} name="options"></input>
+																<span className="option_value">{item}</span>
+															</div> : null
+														}
 													</div>
-
 											}
 										</div>
 									</li>
@@ -386,7 +401,7 @@ class QuestionItem extends React.PureComponent {
 				</div>
 			</div >
 			{
-				isEditor ? <div className="q_operate">
+				!isEditor ? <div className="q_operate">
 					< div className="q_operate_inner" >
 						<Tooltip placement="rightTop" title="编辑题目"><i className="icon_operate btn_question_edit" onClick={() => { }}></i></Tooltip>
 						<Tooltip placement="rightTop" title="复制题目"><i className="icon_operate btn_question_clone" ></i></Tooltip>
