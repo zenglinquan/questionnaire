@@ -21,6 +21,7 @@ export default function DragSort(props) {
             draggable,
             //开始拖动元素时触发此事件 
             onDragStart(){
+              console.log("9")
               curDragIndex = index;
             },
             /*

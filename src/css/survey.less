@@ -45,7 +45,7 @@
                     border: solid 2px #2672ff;
                     color: #2672ff;
 
-                    .icon_type_radio{
+                    .icon_type_radio {
                         background-position: -72px -7px;
                     }
 
@@ -108,13 +108,20 @@
     }
 
     .survey_main_wrap {
-        height: auto;
+        // height: auto;
+        height: 100%;
         width: 834px;
         margin-left: 233px;
-        margin-bottom: 100px;
 
-        .question-box {
+        .question_wrap {
+            overflow:auto;
+            height: 100%;
+            padding-bottom: 40px;
+        }
+
+        .question_box {
             margin: 18px;
+            overflow: scroll-y;
         }
 
         .operation_btn {
@@ -136,6 +143,7 @@
             }
 
         }
+
         .question_hover {
             &:hover {
                 .q_operate {
@@ -144,7 +152,13 @@
                     transform: translateX(0);
                 }
             }
+        }
 
+        .question_focus {
+            box-shadow: 0 10px 15px 0 rgba(0, 0, 0, 0.1);
+            border: solid 2px #2672ff;
+            outline: none;
+            margin: 24px 0;
         }
 
         .question {
@@ -154,7 +168,7 @@
             /* border: solid 2px #ffffff; */
             box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
             position: relative;
-
+            
             .q_content_wrap {
                 .q_content {
                     padding: 18px 40px 18px 30px;
@@ -164,8 +178,6 @@
                             margin: 6px 0 0;
                             position: relative;
                             box-sizing: border-box;
-                            cursor: pointer;
-
                             .icon_hover {
                                 display: inline-block;
                                 position: absolute;
@@ -222,9 +234,10 @@
                             min-height: 20px;
                             word-wrap: break-word;
                             width: 80%;
-                           
+
                         }
-                        .option_value{
+
+                        .option_value {
                             line-height: 30px;
                             padding-left: 15px;
                         }
@@ -292,7 +305,7 @@
                 background-color: #ffffff;
             }
 
-            .icon_option_radio{
+            .icon_option_radio {
                 border-radius: 50%;
             }
 
@@ -321,11 +334,6 @@
             }
         }
 
-        .question_focus {
-            box-shadow: 0 10px 15px 0 rgba(0, 0, 0, 0.1);
-            border: solid 2px #2672ff;
-            outline: none;
-            margin: 24px 0;
-        }
+        
     }
 }
