@@ -10,6 +10,7 @@ export default class Survey extends React.PureComponent {
 		this.editorsEl = [];
 		this.scaleId = '';
 		this.sign = false;
+		this.types = [{ name: "题型", url: "#/survey" }, { name: "外观", url: "#/appearance" }, { name: "逻辑", url: "#/logic" }]
 		this.questionTypes = [
 			{
 				name: "选择题",
@@ -29,6 +30,7 @@ export default class Survey extends React.PureComponent {
 	}
 
 	state = {
+		currentIndex: 0,
 		editorsEl: [],
 		editors: [],
 		isEditor: false,
@@ -67,6 +69,13 @@ export default class Survey extends React.PureComponent {
 			});
 		};
 	}
+
+	changeType(i) {
+		this.setState({
+			currentIndex: i
+		})
+	}
+
 
 	editorsEl() {
 
@@ -207,7 +216,6 @@ export default class Survey extends React.PureComponent {
 			questionId: uuid()  //可改可不该
 		};
 		preEditors.splice(index + 1, 0, copyObj);
-		console.log(preEditors)
 		this.setState({
 			editors: [...preEditors]
 		})
@@ -263,8 +271,9 @@ export default class Survey extends React.PureComponent {
 	}
 
 	render() {
-		let { questionTypes } = this
-		let { editors, editor, optionShake, inputShake, hasTitle, hasOption, hasEditing, drag, curMoveItem } = this.state;
+		let { questionTypes, types } = this
+		let { editors, editor, optionShake, inputShake, hasTitle,
+			hasOption, hasEditing, drag, curMoveItem, currentIndex } = this.state;
 		const isFirst = editors.length !== 0 && editors[editors.length - 1].isFirst;
 		// const hasEditor = editors.some(data => data.isEditor === true);
 		// const canDrag = hasEditor ? false : true;
@@ -311,38 +320,50 @@ export default class Survey extends React.PureComponent {
 				</div>
 
 		})
-		return (<div className="survey">
-			<div className="question_type_wrap">
-				{
-					questionTypes.map((item, i) => {
-						return <dl key={i}>
-							<dt>{item.name}</dt>
-							<dd className="wrap">
-								{
-									item.value.map((item, i) => {
-										return <label key={i} onClick={this.createEditor.bind(this, item)}><i className={`icon_type icon_type_${item.type}`}></i>{item.name}</label>
-									})
-								}
-							</dd>
-						</dl>
-					})
-				}
+		return (<div className="main">
+			<div className="left_nav">
+				<ul>
+					{
+						types.map((item, i) => {
+							return <li className="left_nav_item" key={i} onClick={this.changeType.bind(this, i)}><a href={item.url}><div className={i == currentIndex ? "blue_icon" : ""}><i></i></div>{item.name}</a></li>
+						})
+					}
+				</ul>
 			</div>
-			<div className="survey_main_wrap">
-				<QuestionWrap
-					isFirst={isFirst}>
-					<DragSort
-						draggable={canDrag}
-						data={editors}
-						onDragEnd={this.handleDragEnd.bind(this)}
-						onDragMove={this.handleDragMove.bind(this)}>
-						{editorsEl}
-					</DragSort>
-				</QuestionWrap>
+			<div className="right_con">
+				<div className="survey">
+					<div className="question_type_wrap">
+						{
+							questionTypes.map((item, i) => {
+								return <dl key={i}>
+									<dt>{item.name}</dt>
+									<dd className="wrap">
+										{
+											item.value.map((item, i) => {
+												return <label key={i} onClick={this.createEditor.bind(this, item)}><i className={`icon_type icon_type_${item.type}`}></i>{item.name}</label>
+											})
+										}
+									</dd>
+								</dl>
+							})
+						}
+					</div>
+					<div className="survey_main_wrap">
+						<QuestionWrap
+							isFirst={isFirst}>
+							<DragSort
+								draggable={canDrag}
+								data={editors}
+								onDragEnd={this.handleDragEnd.bind(this)}
+								onDragMove={this.handleDragMove.bind(this)}>
+								{editorsEl}
+							</DragSort>
+						</QuestionWrap>
+					</div>
+					<div className="setting_main_wrap"></div>
+				</div>
 			</div>
-			<div className="setting_main_wrap"></div>
 		</div>
-
 		)
 	}
 }

@@ -15,7 +15,6 @@ export default class QuestionItem extends React.PureComponent {
     }
 
     onMouseEnter = () => {
-        console.log("8")
         this.setState({
             hover: true
         })

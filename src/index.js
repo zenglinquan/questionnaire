@@ -13,9 +13,9 @@ ReactDOM.render((
     <Router history={hashHistory}>
         <Route path="/login" component={Login} />
         <Route path='/' component={Main}>
-            <Route path="" component={Survey} />
+            <Route path="" component={Home} />
+            <Route path="/home" component={Home} />
             <Route path="/survey" component={Survey} />
-            <Route path="/publish" component={Main} />
             <Route path="/appearance" component={Appearance} />
             <Route path="/logic" component={Logic} />
         </Route>
