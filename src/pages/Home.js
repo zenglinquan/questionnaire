@@ -27,9 +27,9 @@ export default class Home extends React.Component {
 					<a href='#/survey'><i className="icon_bg icon_add"></i>新建</a>
 				</li>
 				<li className="card_item">
-					<p>name</p>
-					<p>time</p>
-					<p className="oparation_edit">bianji</p>
+					<p>问卷调查</p>
+					<p>问卷更新时间</p>
+					<p className="oparation_edit">编辑</p>
 				</li>
 			</ul>
 		</div>
